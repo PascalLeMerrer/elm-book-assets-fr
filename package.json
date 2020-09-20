@@ -1,0 +1,11 @@
+{
+  "name": "image-server",
+  "version": "1.0.0",
+  "description": "Backend exposing a minimal API for learning purposes only",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Pascal Le Merrer",
+  "license": "MIT"
+}
