@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Playground exposing (..)
+import Spaceship
 
 
 type State
@@ -10,12 +11,19 @@ type State
 
 type alias Model =
     { state : State
+    , spaceship : Spaceship.Model
     }
+
+
+withSpaceship : Spaceship.Model -> Model -> Model
+withSpaceship spaceship model =
+    { model | spaceship = spaceship }
 
 
 init : Model
 init =
     { state = Home
+    , spaceship = Spaceship.init
     }
 
 
@@ -25,7 +33,13 @@ init =
 
 update : Computer -> Model -> Model
 update computer model =
-    updateGameState computer model
+    let
+        updatedSpaceship =
+            Spaceship.update computer model.spaceship
+    in
+    model
+        |> withSpaceship updatedSpaceship
+        |> updateGameState computer
 
 
 updateGameState : Computer -> Model -> Model
@@ -33,7 +47,16 @@ updateGameState computer model =
     case model.state of
         Home ->
             if computer.mouse.click then
-                { model | state = Playing }
+                let
+                    spaceshipNewY =
+                        computer.screen.bottom + Spaceship.height / 2
+                in
+                { model
+                    | state = Playing
+                    , spaceship =
+                        model.spaceship
+                            |> Spaceship.moveToY spaceshipNewY
+                }
 
             else
                 model
@@ -56,7 +79,9 @@ view computer model =
             ]
 
         Playing ->
-            [ viewBackground computer ]
+            [ viewBackground computer
+            , Spaceship.view model.spaceship
+            ]
 
 
 viewBackground : Computer -> Shape
