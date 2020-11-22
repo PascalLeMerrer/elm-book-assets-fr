@@ -1,6 +1,6 @@
 module Asteroids exposing (..)
 
-import Playground exposing (Shape, image, move)
+import Playground exposing (Computer, Shape, group, image, move)
 
 
 type alias Asteroid =
@@ -22,21 +22,37 @@ speed =
 
 
 type alias Model =
-    Asteroid
+    List Asteroid
 
 
 init =
-    { x = 0
-    , y = 300
-    }
+    [ { x = 0
+      , y = 300
+      }
+    , { x = 200
+      , y = 300
+      }
+    ]
 
 
-update : Model -> Model
-update model =
-    { model | y = model.y - speed }
+update : Computer -> Model -> Model
+update computer model =
+    List.map updateAsteroid model
+        |> List.filter (\asteroid -> asteroid.y > computer.screen.bottom)
+
+
+updateAsteroid : Asteroid -> Asteroid
+updateAsteroid asteroid =
+    { asteroid | y = asteroid.y - speed }
 
 
 view : Model -> Shape
 view model =
+    group <|
+        List.map viewAsteroid model
+
+
+viewAsteroid : Asteroid -> Shape
+viewAsteroid asteroid =
     image width height "http://localhost:9000/captain/asteroid.png"
-        |> move model.x model.y
+        |> move asteroid.x asteroid.y
