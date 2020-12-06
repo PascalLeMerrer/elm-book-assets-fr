@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (class, type_)
+import Html.Attributes exposing (class, src, style, type_)
 import Html.Events exposing (onInput, onSubmit)
 import Http
 import Image exposing (Image, imageListDecoder)
@@ -89,13 +89,9 @@ view model =
     div [ class "container" ]
         [ h1 [ class "title" ] [ text "elm image search" ]
         , viewForm
-        , viewResponse model
+        , viewMessage model
+        , viewResults model
         ]
-
-
-viewResponse : Model -> Html Msg
-viewResponse model =
-    text model.message
 
 
 viewForm : Html Msg
@@ -108,6 +104,41 @@ viewForm =
             ]
             []
         ]
+
+
+viewMessage : Model -> Html Msg
+viewMessage model =
+    if model.message /= "" then
+        div
+            [ class "notification is-danger"
+            , style "margin-top" "20px"
+            ]
+            [ button
+                [ class "delete" ]
+                []
+            , text model.message
+            ]
+
+    else
+        text ""
+
+
+viewResults : Model -> Html Msg
+viewResults model =
+    div
+        [ class "columns is-multiline"
+        , style "margin-top" "20px"
+        ]
+        (List.map viewThumbnail model.images)
+
+
+viewThumbnail : Image -> Html Msg
+viewThumbnail image =
+    img
+        [ src <| "http://localhost:9000" ++ image.thumbnailUrl
+        , class "column is-one-quarter"
+        ]
+        []
 
 
 subscriptions : Model -> Sub Msg
