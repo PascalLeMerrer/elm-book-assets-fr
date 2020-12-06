@@ -2,10 +2,10 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (class, src, style, type_)
+import Html.Attributes exposing (class, src, style, type_, value)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
-import Image exposing (Image, imageListDecoder)
+import Image exposing (Format(..), Image, imageListDecoder)
 
 
 
@@ -13,7 +13,8 @@ import Image exposing (Image, imageListDecoder)
 
 
 type Msg
-    = UserChangedInput String
+    = UserChangedFormat String
+    | UserChangedInput String
     | UserClickedCloseButton
     | UserSubmittedForm
     | ResponseReceived (Result Http.Error (List Image))
@@ -22,6 +23,7 @@ type Msg
 type alias Model =
     { searchTerms : String
     , images : List Image
+    , format : Format
     , message : String
     }
 
@@ -34,6 +36,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { searchTerms = ""
       , images = []
+      , format = Any
       , message = ""
       }
     , Cmd.none
@@ -83,6 +86,17 @@ update msg model =
         ResponseReceived (Err err) ->
             ( { model | message = "La communication a échoué." }, Cmd.none )
 
+        UserChangedFormat selectedValue ->
+            case selectedValue of
+                "landscape" ->
+                    ( { model | format = Landscape }, Cmd.none )
+
+                "portrait" ->
+                    ( { model | format = Portrait }, Cmd.none )
+
+                _ ->
+                    ( { model | format = Any }, Cmd.none )
+
 
 
 {- VIEW -}
@@ -107,6 +121,14 @@ viewForm =
             , onInput UserChangedInput
             ]
             []
+        , div [ class "select" ]
+            [ select
+                [ onInput UserChangedFormat ]
+                [ option [ value "any" ] [ text "Tous" ]
+                , option [ value "landscape" ] [ text "Paysage" ]
+                , option [ value "portrait" ] [ text "Portrait" ]
+                ]
+            ]
         ]
 
 
@@ -135,7 +157,10 @@ viewResults model =
         [ class "columns is-multiline"
         , style "margin-top" "20px"
         ]
-        (List.map viewThumbnail model.images)
+        (model.images
+            |> filterImages model.format
+            |> List.map viewThumbnail
+        )
 
 
 viewThumbnail : Image -> Html Msg
