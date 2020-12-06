@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (class, src, style, type_)
-import Html.Events exposing (onInput, onSubmit)
+import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
 import Image exposing (Image, imageListDecoder)
 
@@ -14,6 +14,7 @@ import Image exposing (Image, imageListDecoder)
 
 type Msg
     = UserChangedInput String
+    | UserClickedCloseButton
     | UserSubmittedForm
     | ResponseReceived (Result Http.Error (List Image))
 
@@ -63,6 +64,9 @@ update msg model =
         UserChangedInput value ->
             ( { model | searchTerms = value }, Cmd.none )
 
+        UserClickedCloseButton ->
+            ( { model | message = "" }, Cmd.none )
+
         UserSubmittedForm ->
             let
                 httpCommand =
@@ -71,7 +75,7 @@ update msg model =
                         , expect = Http.expectJson ResponseReceived imageListDecoder
                         }
             in
-            ( model, httpCommand )
+            ( { model | message = "" }, httpCommand )
 
         ResponseReceived (Ok images) ->
             ( { model | images = images }, Cmd.none )
@@ -114,7 +118,9 @@ viewMessage model =
             , style "margin-top" "20px"
             ]
             [ button
-                [ class "delete" ]
+                [ class "delete"
+                , onClick UserClickedCloseButton
+                ]
                 []
             , text model.message
             ]
