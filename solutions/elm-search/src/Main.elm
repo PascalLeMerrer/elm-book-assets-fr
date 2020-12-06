@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class, type_)
 import Html.Events exposing (onInput, onSubmit)
 import Http
+import Image exposing (Image, imageListDecoder)
 
 
 
@@ -14,12 +15,13 @@ import Http
 type Msg
     = UserChangedInput String
     | UserSubmittedForm
-    | ResponseReceived (Result Http.Error String)
+    | ResponseReceived (Result Http.Error (List Image))
 
 
 type alias Model =
     { searchTerms : String
-    , response : String
+    , images : List Image
+    , message : String
     }
 
 
@@ -30,7 +32,8 @@ type alias Model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { searchTerms = ""
-      , response = ""
+      , images = []
+      , message = ""
       }
     , Cmd.none
     )
@@ -65,16 +68,16 @@ update msg model =
                 httpCommand =
                     Http.get
                         { url = "http://localhost:9000/search/" ++ model.searchTerms
-                        , expect = Http.expectString ResponseReceived
+                        , expect = Http.expectJson ResponseReceived imageListDecoder
                         }
             in
             ( model, httpCommand )
 
-        ResponseReceived (Ok jsonString) ->
-            ( { model | response = jsonString }, Cmd.none )
+        ResponseReceived (Ok images) ->
+            ( { model | images = images }, Cmd.none )
 
-        ResponseReceived (Err _) ->
-            ( { model | response = "La communication a échoué" }, Cmd.none )
+        ResponseReceived (Err err) ->
+            ( { model | message = "La communication a échoué." }, Cmd.none )
 
 
 
@@ -90,6 +93,11 @@ view model =
         ]
 
 
+viewResponse : Model -> Html Msg
+viewResponse model =
+    text model.message
+
+
 viewForm : Html Msg
 viewForm =
     form [ onSubmit UserSubmittedForm ]
@@ -100,15 +108,6 @@ viewForm =
             ]
             []
         ]
-
-
-viewResponse : Model -> Html Msg
-viewResponse model =
-    text model.response
-
-
-
-{- SUBSCRIPTIONS -}
 
 
 subscriptions : Model -> Sub Msg
