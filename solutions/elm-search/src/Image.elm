@@ -1,7 +1,8 @@
-module Image exposing (Format(..), Image, filterImages, imageListDecoder)
+module Image exposing (Format(..), Image, encodeImageList, filterImages, imageListDecoder)
 
 import Json.Decode as Decode exposing (Decoder, field, int, list, string)
 import Json.Decode.Pipeline exposing (required)
+import Json.Encode
 
 
 type alias Image =
@@ -30,6 +31,21 @@ imageDecoder =
 imageListDecoder : Decoder (List Image)
 imageListDecoder =
     field "results" (list imageDecoder)
+
+
+encodeImageList : List Image -> Json.Encode.Value
+encodeImageList images =
+    Json.Encode.list encodeImage images
+
+
+encodeImage : Image -> Json.Encode.Value
+encodeImage image =
+    Json.Encode.object
+        [ ( "thumbnail", Json.Encode.string image.thumbnailUrl )
+        , ( "large", Json.Encode.string image.url )
+        , ( "width", Json.Encode.int image.width )
+        , ( "height", Json.Encode.int image.height )
+        ]
 
 
 filterImages : Format -> List Image -> List Image

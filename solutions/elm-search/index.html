@@ -9,6 +9,11 @@
 <body>
 <app></app>
 <script>
-    Elm.Main.init({node: document.querySelector("app")})</script>
+    let app = Elm.Main.init({node: document.querySelector("app")})
+    app.ports.saveFavorites.subscribe((images) => {
+        let serializedData = JSON.stringify(images);
+        localStorage.setItem('favorites', serializedData);
+    })
+</script>
 </body>
 </html>

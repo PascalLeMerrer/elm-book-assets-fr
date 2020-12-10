@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Browser.Dom
@@ -7,8 +7,12 @@ import Html.Attributes exposing (class, id, src, style, type_, value)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
 import Icon
-import Image exposing (Format(..), Image, filterImages, imageListDecoder)
+import Image exposing (Format(..), Image, encodeImageList, filterImages, imageListDecoder)
+import Json.Encode
 import Task
+
+
+port saveFavorites : Json.Encode.Value -> Cmd msg
 
 
 
@@ -123,7 +127,7 @@ update msg model =
                         imageToToggle :: model.favorites
             in
             ( { model | favorites = favoriteImages }
-            , Cmd.none
+            , saveFavorites (encodeImageList favoriteImages)
             )
 
         NoOp ->
