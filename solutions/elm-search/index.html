@@ -9,19 +9,30 @@
 <body>
 <app></app>
 <script>
-
+    // load favorite images from local storage
     let savedData = localStorage.getItem('favorites');
     let favorites = JSON.parse(savedData);
+
+    // run the Elm app
     let params = {
         node: document.querySelector("app"),
         flags: favorites
     };
     let app = Elm.Main.init(params);
 
+    // store the favorite images when they change
     app.ports.saveFavorites.subscribe((images) => {
         let serializedData = JSON.stringify(images);
         localStorage.setItem('favorites', serializedData);
     })
+
+    // listen to the changes of the local storage
+    window.addEventListener('storage', (event) => {
+        let images = JSON.parse(event.newValue);
+        console.log(images)
+        app.ports.onFavoritesChanged.send(images);
+    })
+
 </script>
 </body>
 </html>

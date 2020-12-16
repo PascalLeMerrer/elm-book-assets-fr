@@ -13,7 +13,18 @@ import Json.Encode
 import Task
 
 
+
+{- OUTPUT PORT -}
+
+
 port saveFavorites : Json.Encode.Value -> Cmd msg
+
+
+
+{- INPUT PORT -}
+
+
+port onFavoritesChanged : (Json.Encode.Value -> msg) -> Sub msg
 
 
 
@@ -21,7 +32,8 @@ port saveFavorites : Json.Encode.Value -> Cmd msg
 
 
 type Msg
-    = UserChangedFormat String
+    = AnotherTabModifiedFavorites (List Image)
+    | UserChangedFormat String
     | UserChangedInput String
     | UserClickedCloseButton
     | UserClickedLike Image
@@ -150,6 +162,11 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
+        AnotherTabModifiedFavorites favoriteImages ->
+            ( { model | favorites = favoriteImages }
+            , Cmd.none
+            )
+
 
 isFavorite : Model -> Image -> Bool
 isFavorite model image =
@@ -255,4 +272,18 @@ viewHeart model image =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    onFavoritesChanged decodeModifiedFavorites
+
+
+decodeModifiedFavorites : Json.Encode.Value -> Msg
+decodeModifiedFavorites value =
+    let
+        decodedList =
+            Json.Decode.decodeValue (list imageDecoder) value
+    in
+    case decodedList of
+        Ok images ->
+            AnotherTabModifiedFavorites images
+
+        Err error ->
+            NoOp
