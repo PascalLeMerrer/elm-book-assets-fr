@@ -39,15 +39,13 @@ function addCorsHeadersToResponse(res) {
 
 function respondToSearchRequest(req, res, query) {
   let key = query.toLowerCase();
-  const results = searchResponses[key];
+  let results = searchResponses[key];
   res.setHeader('Content-type', 'application/json');
+  res.statusCode = 200;
   if (results === undefined) {
-    res.statusCode = 404;
-    res.end('');
-  } else {
-    res.statusCode = 200;
-    res.end(JSON.stringify({ "results" : results }));
+    results = [];
   }
+  res.end(JSON.stringify({ "results" : results }));
 }
 
 function serveStaticFile(req, res, parsedUrl) {
