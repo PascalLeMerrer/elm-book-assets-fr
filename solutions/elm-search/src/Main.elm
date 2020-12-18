@@ -35,8 +35,10 @@ type Msg
     = AnotherTabModifiedFavorites (List Image)
     | UserChangedFormat String
     | UserChangedInput String
+    | UserClickedBackLink
     | UserClickedCloseButton
     | UserClickedLike Image
+    | UserClickedThumbnail Image
     | UserSubmittedForm
     | ResponseReceived (Result Http.Error (List Image))
     | NoOp
@@ -48,6 +50,7 @@ type alias Model =
     , format : Format
     , message : Notification
     , favorites : List Image
+    , selectedImage : Maybe Image
     }
 
 
@@ -87,6 +90,7 @@ init flags =
       , format = Any
       , message = None
       , favorites = favorites
+      , selectedImage = Nothing
       }
     , focusOn inputId
     )
@@ -184,6 +188,16 @@ update msg model =
             , Cmd.none
             )
 
+        UserClickedThumbnail image ->
+            ( { model | selectedImage = Just image }
+            , Cmd.none
+            )
+
+        UserClickedBackLink ->
+            ( { model | selectedImage = Nothing }
+            , Cmd.none
+            )
+
 
 isFavorite : Model -> Image -> Bool
 isFavorite model image =
@@ -196,12 +210,22 @@ isFavorite model image =
 
 view : Model -> Html Msg
 view model =
-    div [ class "container" ]
-        [ h1 [ class "title" ] [ text "elm image search" ]
-        , viewForm
-        , viewMessage model
-        , viewResults model
-        ]
+    div [ class "container" ] <|
+        case model.selectedImage of
+            Just image ->
+                [ viewSelectedImage model image ]
+
+            Nothing ->
+                viewSearch model
+
+
+viewSearch : Model -> List (Html Msg)
+viewSearch model =
+    [ h1 [ class "title" ] [ text "elm image search" ]
+    , viewForm
+    , viewMessage model
+    , viewResults model
+    ]
 
 
 viewForm : Html Msg
@@ -283,9 +307,22 @@ viewThumbnail model image =
         [ class "column is-one-quarter" ]
         [ img
             [ src <| "http://localhost:9000" ++ image.thumbnailUrl
+            , onClick <| UserClickedThumbnail image
             ]
             []
         , viewHeart model image
+        ]
+
+
+viewSelectedImage : Model -> Image -> Html Msg
+viewSelectedImage model image =
+    div
+        []
+        [ div [ class "block" ] [ a [ onClick UserClickedBackLink ] [ text "Retour" ] ]
+        , img
+            [ src <| "http://localhost:9000" ++ image.url
+            ]
+            []
         ]
 
 
