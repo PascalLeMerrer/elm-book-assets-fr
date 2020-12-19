@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class, src, style, type_, value)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
-import Image exposing (Format(..), Image, imageListDecoder)
+import Image exposing (Format(..), Image, filterImages, imageListDecoder)
 
 
 
@@ -24,7 +24,7 @@ type alias Model =
     { searchTerms : String
     , images : List Image
     , format : Format
-    , message : String
+    , message : Maybe String
     }
 
 
@@ -37,7 +37,7 @@ init _ =
     ( { searchTerms = ""
       , images = []
       , format = Any
-      , message = ""
+      , message = Nothing
       }
     , Cmd.none
     )
@@ -68,7 +68,7 @@ update msg model =
             ( { model | searchTerms = value }, Cmd.none )
 
         UserClickedCloseButton ->
-            ( { model | message = "" }, Cmd.none )
+            ( { model | message = Nothing }, Cmd.none )
 
         UserSubmittedForm ->
             let
@@ -78,13 +78,13 @@ update msg model =
                         , expect = Http.expectJson ResponseReceived imageListDecoder
                         }
             in
-            ( { model | message = "" }, httpCommand )
+            ( { model | message = Nothing }, httpCommand )
 
         ResponseReceived (Ok images) ->
             ( { model | images = images }, Cmd.none )
 
         ResponseReceived (Err err) ->
-            ( { model | message = "La communication a échoué." }, Cmd.none )
+            ( { model | message = Just "La communication a échoué." }, Cmd.none )
 
         UserChangedFormat selectedValue ->
             case selectedValue of
@@ -134,21 +134,22 @@ viewForm =
 
 viewMessage : Model -> Html Msg
 viewMessage model =
-    if model.message /= "" then
-        div
-            [ class "notification is-danger"
-            , style "margin-top" "20px"
-            ]
-            [ button
-                [ class "delete"
-                , onClick UserClickedCloseButton
+    case model.message of
+        Just message ->
+            div
+                [ class "notification is-danger"
+                , style "margin-top" "20px"
                 ]
-                []
-            , text model.message
-            ]
+                [ button
+                    [ class "delete"
+                    , onClick UserClickedCloseButton
+                    ]
+                    []
+                , text message
+                ]
 
-    else
-        text ""
+        Nothing ->
+            text ""
 
 
 viewResults : Model -> Html Msg
