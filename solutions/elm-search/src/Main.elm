@@ -1,11 +1,13 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Dom
 import Html exposing (..)
-import Html.Attributes exposing (class, src, style, type_, value)
+import Html.Attributes exposing (class, id, src, style, type_, value)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
 import Image exposing (Format(..), Image, filterImages, imageListDecoder)
+import Task
 
 
 
@@ -18,6 +20,7 @@ type Msg
     | UserClickedCloseButton
     | UserSubmittedForm
     | ResponseReceived (Result Http.Error (List Image))
+    | NoOp
 
 
 type alias Model =
@@ -39,8 +42,17 @@ init _ =
       , format = Any
       , message = Nothing
       }
-    , Cmd.none
+    , focusOn inputId
     )
+
+
+{-| Sets the focus on the element which Id is given,
+then emits a NoOp message even if the element was not found
+-}
+focusOn : String -> Cmd Msg
+focusOn elementId =
+    Browser.Dom.focus elementId
+        |> Task.attempt (\_ -> NoOp)
 
 
 
@@ -97,6 +109,9 @@ update msg model =
                 _ ->
                     ( { model | format = Any }, Cmd.none )
 
+        NoOp ->
+            ( model, Cmd.none )
+
 
 
 {- VIEW -}
@@ -119,9 +134,13 @@ viewForm =
             [ type_ "text"
             , class "medium input"
             , onInput UserChangedInput
+            , id inputId
             ]
             []
-        , div [ class "select" ]
+        , div
+            [ class "select"
+            , style "margin-top" "20px"
+            ]
             [ select
                 [ onInput UserChangedFormat ]
                 [ option [ value "any" ] [ text "Tous" ]
@@ -130,6 +149,10 @@ viewForm =
                 ]
             ]
         ]
+
+
+inputId =
+    "searchInput"
 
 
 viewMessage : Model -> Html Msg
