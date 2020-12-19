@@ -46,9 +46,18 @@ type alias Model =
     { searchTerms : String
     , images : List Image
     , format : Format
-    , message : Maybe String
+    , message : Notification
     , favorites : List Image
     }
+
+
+{-| Use custom types to represent the states of the app.
+It allows the compiler to check the business logic.
+-}
+type Notification
+    = Error String
+    | Info String
+    | None
 
 
 
@@ -76,7 +85,7 @@ init flags =
     ( { searchTerms = ""
       , images = []
       , format = Any
-      , message = Nothing
+      , message = None
       , favorites = favorites
       }
     , focusOn inputId
@@ -117,7 +126,7 @@ update msg model =
             ( { model | searchTerms = value }, Cmd.none )
 
         UserClickedCloseButton ->
-            ( { model | message = Nothing }, Cmd.none )
+            ( { model | message = None }, Cmd.none )
 
         UserSubmittedForm ->
             let
@@ -127,13 +136,21 @@ update msg model =
                         , expect = Http.expectJson ResponseReceived imageListDecoder
                         }
             in
-            ( { model | message = Nothing }, httpCommand )
+            ( { model | message = None }, httpCommand )
+
+        ResponseReceived (Ok []) ->
+            ( { model
+                | images = []
+                , message = Info "Aucune image ne correspond à cette recherche."
+              }
+            , Cmd.none
+            )
 
         ResponseReceived (Ok images) ->
             ( { model | images = images }, Cmd.none )
 
         ResponseReceived (Err err) ->
-            ( { model | message = Just "La communication a échoué." }, Cmd.none )
+            ( { model | message = Error "La communication a échoué." }, Cmd.none )
 
         UserChangedFormat selectedValue ->
             case selectedValue of
@@ -218,21 +235,34 @@ inputId =
 viewMessage : Model -> Html Msg
 viewMessage model =
     case model.message of
-        Just message ->
-            div
-                [ class "notification is-danger"
-                , style "margin-top" "20px"
-                ]
-                [ button
-                    [ class "delete"
-                    , onClick UserClickedCloseButton
-                    ]
-                    []
-                , text message
-                ]
+        Error errorMessage ->
+            viewNotification errorMessage (class "is-danger")
 
-        Nothing ->
+        Info information ->
+            viewNotification information (class "is-info")
+
+        None ->
             text ""
+
+
+{-| Defining the second parameter as an attribute instead
+of a class name (i.e. a string) prevents confusions
+in parameter order when invoking this function
+-}
+viewNotification : String -> Attribute Msg -> Html Msg
+viewNotification label cssClass =
+    div
+        [ class "notification"
+        , cssClass
+        , style "margin-top" "20px"
+        ]
+        [ button
+            [ class "delete"
+            , onClick UserClickedCloseButton
+            ]
+            []
+        , text label
+        ]
 
 
 viewResults : Model -> Html Msg
