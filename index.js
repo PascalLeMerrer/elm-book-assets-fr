@@ -15,14 +15,14 @@ http.createServer(function (req, res) {
 
   addCorsHeadersToResponse(res)
 
-  if (pathname.startsWith("/search")) {
-    const query = pathname.substring("/search".length + 1)
-    respondToSearchRequest(req, res, query)
-  }
-  else if (pathname == "/erreur") {
+  if (pathname == "/search/erreur") {
     res.statusCode = 400;
 
     res.end('Invalid parameter');
+  }
+  else if (pathname.startsWith("/search")) {
+    const query = pathname.substring("/search".length + 1)
+    respondToSearchRequest(req, res, query)
   }
   else if (pathname == "/favicon.ico"){
 
