@@ -1,4 +1,4 @@
-module Image exposing (Format(..), Image, encodeImageList, filterImages, imageListDecoder)
+module Image exposing (Format(..), Image, encodeImageList, filterImages, imageDecoder, imageListDecoder)
 
 import Json.Decode as Decode exposing (Decoder, field, int, list, string)
 import Json.Decode.Pipeline exposing (required)

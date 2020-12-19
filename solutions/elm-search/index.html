@@ -9,7 +9,15 @@
 <body>
 <app></app>
 <script>
-    let app = Elm.Main.init({node: document.querySelector("app")})
+
+    let savedData = localStorage.getItem('favorites');
+    let favorites = JSON.parse(savedData);
+    let params = {
+        node: document.querySelector("app"),
+        flags: favorites
+    };
+    let app = Elm.Main.init(params);
+
     app.ports.saveFavorites.subscribe((images) => {
         let serializedData = JSON.stringify(images);
         localStorage.setItem('favorites', serializedData);

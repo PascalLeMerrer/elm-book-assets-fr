@@ -7,7 +7,8 @@ import Html.Attributes exposing (class, id, src, style, type_, value)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
 import Icon
-import Image exposing (Format(..), Image, encodeImageList, filterImages, imageListDecoder)
+import Image exposing (Format(..), Image, encodeImageList, filterImages, imageDecoder, imageListDecoder)
+import Json.Decode exposing (list)
 import Json.Encode
 import Task
 
@@ -42,13 +43,29 @@ type alias Model =
 {- initialisation of the model -}
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+type alias Flags =
+    Json.Encode.Value
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    let
+        decodedFlags =
+            Json.Decode.decodeValue (list imageDecoder) flags
+
+        favorites =
+            case decodedFlags of
+                Ok images ->
+                    images
+
+                Err _ ->
+                    []
+    in
     ( { searchTerms = ""
       , images = []
       , format = Any
       , message = Nothing
-      , favorites = []
+      , favorites = favorites
       }
     , focusOn inputId
     )
@@ -67,7 +84,7 @@ focusOn elementId =
 {- MAIN FUNCTION -}
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.element
         { init = init
