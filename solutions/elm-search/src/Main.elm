@@ -6,6 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class, id, src, style, type_, value)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Http
+import Icon
 import Image exposing (Format(..), Image, filterImages, imageListDecoder)
 import Task
 
@@ -18,6 +19,7 @@ type Msg
     = UserChangedFormat String
     | UserChangedInput String
     | UserClickedCloseButton
+    | UserClickedLike Image
     | UserSubmittedForm
     | ResponseReceived (Result Http.Error (List Image))
     | NoOp
@@ -28,6 +30,7 @@ type alias Model =
     , images : List Image
     , format : Format
     , message : Maybe String
+    , favorites : List Image
     }
 
 
@@ -41,6 +44,7 @@ init _ =
       , images = []
       , format = Any
       , message = Nothing
+      , favorites = []
       }
     , focusOn inputId
     )
@@ -109,8 +113,26 @@ update msg model =
                 _ ->
                     ( { model | format = Any }, Cmd.none )
 
+        UserClickedLike imageToToggle ->
+            let
+                favoriteImages =
+                    if isFavorite model imageToToggle then
+                        List.filter (\image -> image.url /= imageToToggle.url) model.favorites
+
+                    else
+                        imageToToggle :: model.favorites
+            in
+            ( { model | favorites = favoriteImages }
+            , Cmd.none
+            )
+
         NoOp ->
             ( model, Cmd.none )
+
+
+isFavorite : Model -> Image -> Bool
+isFavorite model image =
+    List.member image model.favorites
 
 
 
@@ -183,17 +205,31 @@ viewResults model =
         ]
         (model.images
             |> filterImages model.format
-            |> List.map viewThumbnail
+            |> List.map (viewThumbnail model)
         )
 
 
-viewThumbnail : Image -> Html Msg
-viewThumbnail image =
-    img
-        [ src <| "http://localhost:9000" ++ image.thumbnailUrl
-        , class "column is-one-quarter"
+viewThumbnail : Model -> Image -> Html Msg
+viewThumbnail model image =
+    div
+        [ class "column is-one-quarter" ]
+        [ img
+            [ src <| "http://localhost:9000" ++ image.thumbnailUrl
+            ]
+            []
+        , viewHeart model image
         ]
-        []
+
+
+viewHeart : Model -> Image -> Html Msg
+viewHeart model image =
+    span [ onClick (UserClickedLike image) ]
+        [ if isFavorite model image then
+            Icon.heartFilled
+
+          else
+            Icon.heartLine
+        ]
 
 
 subscriptions : Model -> Sub Msg
