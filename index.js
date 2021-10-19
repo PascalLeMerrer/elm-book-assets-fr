@@ -54,9 +54,12 @@ function serveStaticFile(req, res, parsedUrl) {
   // Avoid https://en.wikipedia.org/wiki/Directory_traversal_attack
   // e.g curl --path-as-is http://localhost:9000/../fileInDanger.txt
   // by limiting the path to current directory only
-  const sanitizePath = path.normalize(parsedUrl.pathname).replace(/^(\.\.[\/\\])+/, '');
+  let sanitizePath = path.normalize(parsedUrl.pathname).replace(/^(\.\.[\/\\])+/, '');
+  if (sanitizePath == "/") {
+    sanitizePath = "/index.html";
+  }
   let pathname = path.join(__dirname, sanitizePath);
-
+  
   fs.exists(pathname, function (exist) {
     if(!exist) {
       res.statusCode = 404;
